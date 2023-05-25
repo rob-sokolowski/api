@@ -8,21 +8,28 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/rob-sokolowski/cors-proxy/lib"
+	"io"
+	"net/url"
 
 	"net/http"
 )
 
+var vellumAiUrl, _ = url.Parse("https://predict.vellum.ai/v1/generate")
+var secretsWrapper *lib.SecretsWrapper
+
 func configureMiddleware(ctx context.Context, r *chi.Mux) {
 	r.Use(middleware.Logger)
+
 	// Basic CORS
 	// for more ideas, see: https://developer.github.com/v3/#cross-origin-resource-sharing
 	r.Use(cors.Handler(cors.Options{
 		// TODO: Need to toggle this value based on env
 		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
-		AllowedOrigins: []string{"https://*", "http://*"},
+		AllowedOrigins: []string{"*"},
 		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders: []string{"*"},
+		//AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "X-API-KEY"},
 		ExposedHeaders:   []string{"Link"},
 		AllowCredentials: false,
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
@@ -46,15 +53,62 @@ func configureRouteHandlers(r *chi.Mux) {
 		w.Write(jsonData)
 	})
 
+	//vellumAiProxy := httputil.NewSingleHostReverseProxy(vellumAiUrl)
+	//vellumAiProxy.Director = func(req *http.Request) {
+	//	req.URL.Scheme = vellumAiUrl.Scheme
+	//	req.URL.Host = vellumAiUrl.Host
+	//	req.URL.Path = "/v1/generate"
+	//	req.Header.Add("X-API-KEY", "<API_KEY>")
+	//}
+
+	// TODO: This is not a good solution, but it unblocks me. I would like to use the built-in http proxy
+	//       to solve this issue more generally
 	r.Post("/vellum-ai", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusNoContent)
+		outReq, err := http.NewRequestWithContext(r.Context(), r.Method, vellumAiUrl.String(), r.Body)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		apiKey, err := secretsWrapper.VellumApiKey()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		outReq.Header.Add("X-API-KEY", apiKey)
+		outReq.Header.Add("content-type", "application/json")
+		outReq.Header.Add("accept", "application/json")
+
+		client := &http.Client{}
+		resp, err := client.Do(outReq)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(resp.StatusCode)
+		_, err = io.Copy(w, resp.Body)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	})
 }
 
 func main() {
 	r := chi.NewRouter()
-	configureMiddleware(context.Background(), r)
+	ctx := context.Background()
+	configureMiddleware(ctx, r)
 	configureRouteHandlers(r)
+
+	secretsWrapper, err := lib.InitSecretsWrapper(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	// eager fetch for vellum secret
+	go secretsWrapper.VellumApiKey()
 
 	fmt.Println("Server starting..")
 	http.ListenAndServe(":8080", r)
