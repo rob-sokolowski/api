@@ -1,0 +1,38 @@
+steps:
+  - id: Pull down service account creds file
+    name: 'gcr.io/cloud-builders/gsutil'
+    args: [ 'cp', 'gs://project-fir-api-maintenance/service-runner-production-creds.json', './.private/service-runner-production-creds.json' ]
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: Build production image
+    dir: './'
+    args: ['build', '-t', 'gcr.io/fir-sandbox-326008/cors-proxy:production-latest', '--file', '.cloudbuild/Dockerfile', '.']
+
+  - id: Push up to GCR
+    name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/fir-sandbox-326008/cors-proxy:production-latest']
+
+  - id: Deploy to Cloud Run
+    name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args: [
+      'run', 'deploy', 'cors-proxy',
+      '--image', 'gcr.io/fir-sandbox-326008/cors-proxy:production-latest',
+      '--platform', 'managed',
+      '--region', 'us-east4',
+      '--memory', '512Mi',
+      '--cpu', '2',
+      '--no-cpu-throttling',
+      '--set-env-vars', 'GCP_PROJECT_ID=fir-sandbox-326008',
+      '--set-env-vars', 'GCP_REGION=us-east4',
+      '--set-env-vars', 'GOOGLE_APPLICATION_CREDENTIALS=/private/service-runner-production-creds.json',
+      '--set-env-vars', 'ENV_NAME=production',
+      '--min-instances',
+      '0',
+      '--max-instances',
+      '2',
+    ]
+
+options:
+  pool:
+    name: 'projects/fir-sandbox-326008/locations/us-east4/workerPools/pool-1'
