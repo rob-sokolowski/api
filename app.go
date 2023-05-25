@@ -62,7 +62,8 @@ func configureRouteHandlers(r *chi.Mux, sw *lib.SecretsWrapper) {
 	//}
 
 	// TODO: This is not a good solution, but it unblocks me. I would like to use the built-in http proxy
-	//       to solve this issue more generally
+	//       to solve this issue more generally. When I tried that, it appeared to be mutating the request in some way
+	//       that wasn't compatible with vellum
 	r.Post("/vellum-ai", func(w http.ResponseWriter, r *http.Request) {
 		outReq, err := http.NewRequestWithContext(r.Context(), r.Method, vellumAiUrl.String(), r.Body)
 		if err != nil {
