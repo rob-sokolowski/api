@@ -36,7 +36,7 @@ func configureMiddleware(ctx context.Context, r *chi.Mux) {
 	}))
 }
 
-func configureRouteHandlers(r *chi.Mux) {
+func configureRouteHandlers(r *chi.Mux, sw *lib.SecretsWrapper) {
 	// healthchecks
 	r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
 		data := lib.PingResponse{
@@ -70,7 +70,7 @@ func configureRouteHandlers(r *chi.Mux) {
 			return
 		}
 
-		apiKey, err := secretsWrapper.VellumApiKey()
+		apiKey, err := sw.VellumApiKey()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -97,18 +97,15 @@ func configureRouteHandlers(r *chi.Mux) {
 }
 
 func main() {
-	r := chi.NewRouter()
 	ctx := context.Background()
-	configureMiddleware(ctx, r)
-	configureRouteHandlers(r)
-
 	secretsWrapper, err := lib.InitSecretsWrapper(ctx)
 	if err != nil {
 		panic(err)
 	}
 
-	// eager fetch for vellum secret
-	go secretsWrapper.VellumApiKey()
+	r := chi.NewRouter()
+	configureMiddleware(ctx, r)
+	configureRouteHandlers(r, secretsWrapper)
 
 	fmt.Println("Server starting..")
 	http.ListenAndServe(":8080", r)
