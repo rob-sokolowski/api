@@ -9,6 +9,38 @@ import (
 	"os"
 )
 
+// begin region: queue implementation
+
+// Queue is your textbook FIFO data structure, borrowed from Ch. 3, but I made it a bit more generic
+type Queue[T any] struct {
+	Elements []*T
+}
+
+// NewQueue allocates memory for a queue
+func NewQueue[T any](cap int) (*Queue[T], error) {
+	els := make([]*T, 0, cap)
+
+	return &Queue[T]{
+		Elements: els,
+	}, nil
+}
+
+func (q *Queue[T]) Dequeue() *T {
+	if len(q.Elements) == 0 {
+		return nil
+	}
+
+	el := q.Elements[0]
+	q.Elements = q.Elements[1:]
+	return el
+}
+
+func (q *Queue[T]) Enqueue(e T) {
+	q.Elements = append(q.Elements, &e)
+}
+
+// end regions: queue implementation
+
 // I think this could/should be dynamically set, but I'm following the book as-is
 const maxVertices = 1000
 
@@ -103,4 +135,21 @@ func (g *Graph) InsertEdge(lhs, rhs int, directed bool) (err error) {
 	}
 
 	return nil
+}
+
+func (g *Graph) bfs(start int) {
+	var processed [maxVertices + 1]bool
+	var discovered [maxVertices + 1]bool
+	var parent [maxVertices + 1]int
+
+	var initializeSearch = func() {
+		for i := 0; i < maxVertices+1; i++ {
+			parent[i] = -1
+		}
+	}
+
+	fmt.Println(processed, discovered, parent)
+
+	initializeSearch()
+
 }
