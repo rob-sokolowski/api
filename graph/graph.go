@@ -17,12 +17,10 @@ type Queue[T any] struct {
 }
 
 // NewQueue allocates memory for a queue
-func NewQueue[T any](cap int) (*Queue[T], error) {
-	els := make([]*T, 0, cap)
-
+func NewQueue[T any](cap int) *Queue[T] {
 	return &Queue[T]{
-		Elements: els,
-	}, nil
+		Elements: make([]*T, 0, cap),
+	}
 }
 
 func (q *Queue[T]) Dequeue() *T {
@@ -37,6 +35,10 @@ func (q *Queue[T]) Dequeue() *T {
 
 func (q *Queue[T]) Enqueue(e T) {
 	q.Elements = append(q.Elements, &e)
+}
+
+func (q *Queue[T]) IsEmpty() bool {
+	return len(q.Elements) == 0
 }
 
 // end regions: queue implementation
@@ -137,10 +139,17 @@ func (g *Graph) InsertEdge(lhs, rhs int, directed bool) (err error) {
 	return nil
 }
 
-func (g *Graph) bfs(start int) {
+// Bfs performs a breadth-first search over the Graph, starting at the node start
+func (g *Graph) Bfs(start int) (int, int) {
 	var processed [maxVertices + 1]bool
 	var discovered [maxVertices + 1]bool
 	var parent [maxVertices + 1]int
+	var tmpNode *EdgeNode
+	var v int // current vertex
+	var y int // successor vertex
+	edgesProcessed := 0
+	verticesProcessed := 0
+	queue := NewQueue[int](10)
 
 	var initializeSearch = func() {
 		for i := 0; i < maxVertices+1; i++ {
@@ -148,8 +157,42 @@ func (g *Graph) bfs(start int) {
 		}
 	}
 
-	fmt.Println(processed, discovered, parent)
+	var processEarly = func(v int) {
+		// noop
+	}
+
+	var processEdge = func(v, y int) {
+		edgesProcessed++
+	}
+
+	var processLate = func(y int) {
+		verticesProcessed++
+	}
 
 	initializeSearch()
+	queue.Enqueue(start)
+	discovered[start] = true
 
+	for !queue.IsEmpty() {
+		v = *queue.Dequeue()
+		processEarly(v)
+		processed[v] = true
+		tmpNode = g.Edges[v]
+		for tmpNode != nil {
+			y = tmpNode.Y
+			if processed[y] == false || g.Directed {
+				processEdge(v, y)
+			}
+			if discovered[y] == false {
+				queue.Enqueue(y)
+				discovered[y] = true
+				parent[y] = v
+			}
+			tmpNode = tmpNode.Next
+		}
+
+		processLate(v)
+	}
+
+	return verticesProcessed, edgesProcessed
 }
