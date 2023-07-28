@@ -62,15 +62,9 @@ type Graph struct {
 
 func NewGraph(directed bool) (g *Graph, err error) {
 	g = new(Graph)
-
 	g.NVertices = 0
 	g.NEdges = 0
 	g.Directed = directed
-
-	for i := 0; i < maxVertices; i++ {
-		g.Degree[i] = 0
-		g.Edges[i] = nil
-	}
 
 	return g, nil
 }
@@ -96,7 +90,7 @@ func ReadFromFile(filename string, directed bool) (g *Graph, err error) {
 	scanner := bufio.NewScanner(f)
 	scanner.Split(bufio.ScanLines)
 
-	var i int = 0
+	i := 0
 	for scanner.Scan() {
 		var lhs, rhs int
 		line := scanner.Text()
