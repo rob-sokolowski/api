@@ -9,6 +9,40 @@ import (
 	"os"
 )
 
+// begin region: queue implementation
+
+// Queue is your textbook FIFO data structure, borrowed from Ch. 3, but I made it a bit more generic
+type Queue[T any] struct {
+	Elements []*T
+}
+
+// NewQueue allocates memory for a queue
+func NewQueue[T any](cap int) *Queue[T] {
+	return &Queue[T]{
+		Elements: make([]*T, 0, cap),
+	}
+}
+
+func (q *Queue[T]) Dequeue() *T {
+	if len(q.Elements) == 0 {
+		return nil
+	}
+
+	el := q.Elements[0]
+	q.Elements = q.Elements[1:]
+	return el
+}
+
+func (q *Queue[T]) Enqueue(e T) {
+	q.Elements = append(q.Elements, &e)
+}
+
+func (q *Queue[T]) IsEmpty() bool {
+	return len(q.Elements) == 0
+}
+
+// end regions: queue implementation
+
 // I think this could/should be dynamically set, but I'm following the book as-is
 const maxVertices = 1000
 
@@ -28,15 +62,9 @@ type Graph struct {
 
 func NewGraph(directed bool) (g *Graph, err error) {
 	g = new(Graph)
-
 	g.NVertices = 0
 	g.NEdges = 0
 	g.Directed = directed
-
-	for i := 0; i < maxVertices; i++ {
-		g.Degree[i] = 0
-		g.Edges[i] = nil
-	}
 
 	return g, nil
 }
@@ -62,7 +90,7 @@ func ReadFromFile(filename string, directed bool) (g *Graph, err error) {
 	scanner := bufio.NewScanner(f)
 	scanner.Split(bufio.ScanLines)
 
-	var i int = 0
+	i := 0
 	for scanner.Scan() {
 		var lhs, rhs int
 		line := scanner.Text()
@@ -81,6 +109,23 @@ func ReadFromFile(filename string, directed bool) (g *Graph, err error) {
 	}
 
 	return g, nil
+}
+
+// ConnectedComponents counts the distinct maximal components of a graph.
+// For example, two cliques without any mutual friends between any members would
+// result in two. Two cliques where just one member from each know each other would be one.
+func (g *Graph) ConnectedComponents() int {
+	s := newSearch(g)
+	c := 0
+
+	for i := 0; i < g.NVertices; i++ {
+		if s.discovered[i] == false {
+			c++
+			g.Bfs(i)
+		}
+	}
+
+	return c
 }
 
 // InsertEdge inserts an edge into the graph. If directed the is will be from lhs to rhs, otherwise two
@@ -103,4 +148,69 @@ func (g *Graph) InsertEdge(lhs, rhs int, directed bool) (err error) {
 	}
 
 	return nil
+}
+
+type searchHelper struct {
+	graph      *Graph
+	processed  []bool
+	discovered []bool
+}
+
+func newSearch(g *Graph) *searchHelper {
+	return &searchHelper{
+		graph:      g,
+		processed:  make([]bool, maxVertices+1),
+		discovered: make([]bool, maxVertices+1),
+	}
+}
+
+// Bfs performs a breadth-first search over the Graph, starting at the node start
+func (g *Graph) Bfs(start int) (int, int) {
+	var parent [maxVertices + 1]int
+	var tmpNode *EdgeNode
+	var v int // current vertex
+	var y int // successor vertex
+	edgesProcessed := 0
+	verticesProcessed := 0
+	queue := NewQueue[int](10)
+
+	var processEarly = func(v int) {
+		// noop
+	}
+
+	var processEdge = func(v, y int) {
+		edgesProcessed++
+	}
+
+	var processLate = func(y int) {
+		verticesProcessed++
+	}
+
+	s := newSearch(g)
+
+	queue.Enqueue(start)
+	s.discovered[start] = true
+
+	for !queue.IsEmpty() {
+		v = *queue.Dequeue()
+		processEarly(v)
+		s.processed[v] = true
+		tmpNode = g.Edges[v]
+		for tmpNode != nil {
+			y = tmpNode.Y
+			if s.processed[y] == false || g.Directed {
+				processEdge(v, y)
+			}
+			if s.discovered[y] == false {
+				queue.Enqueue(y)
+				s.discovered[y] = true
+				parent[y] = v
+			}
+			tmpNode = tmpNode.Next
+		}
+
+		processLate(v)
+	}
+
+	return verticesProcessed, edgesProcessed
 }
