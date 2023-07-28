@@ -117,6 +117,23 @@ func ReadFromFile(filename string, directed bool) (g *Graph, err error) {
 	return g, nil
 }
 
+// ConnectedComponents counts the distinct maximal components of a graph.
+// For example, two cliques without any mutual friends between any members would
+// result in two. Two cliques where just one member from each know each other would be one.
+func (g *Graph) ConnectedComponents() int {
+	s := newSearch(g)
+	c := 0
+
+	for i := 0; i < g.NVertices; i++ {
+		if s.discovered[i] == false {
+			c++
+			g.Bfs(i)
+		}
+	}
+
+	return c
+}
+
 // InsertEdge inserts an edge into the graph. If directed the is will be from lhs to rhs, otherwise two
 // edges will be inserted, one from lhs to rhs and one from rhs to lhs
 func (g *Graph) InsertEdge(lhs, rhs int, directed bool) (err error) {
@@ -139,10 +156,22 @@ func (g *Graph) InsertEdge(lhs, rhs int, directed bool) (err error) {
 	return nil
 }
 
+type searchHelper struct {
+	graph      *Graph
+	processed  []bool
+	discovered []bool
+}
+
+func newSearch(g *Graph) *searchHelper {
+	return &searchHelper{
+		graph:      g,
+		processed:  make([]bool, maxVertices+1),
+		discovered: make([]bool, maxVertices+1),
+	}
+}
+
 // Bfs performs a breadth-first search over the Graph, starting at the node start
 func (g *Graph) Bfs(start int) (int, int) {
-	var processed [maxVertices + 1]bool
-	var discovered [maxVertices + 1]bool
 	var parent [maxVertices + 1]int
 	var tmpNode *EdgeNode
 	var v int // current vertex
@@ -150,12 +179,6 @@ func (g *Graph) Bfs(start int) (int, int) {
 	edgesProcessed := 0
 	verticesProcessed := 0
 	queue := NewQueue[int](10)
-
-	var initializeSearch = func() {
-		for i := 0; i < maxVertices+1; i++ {
-			parent[i] = -1
-		}
-	}
 
 	var processEarly = func(v int) {
 		// noop
@@ -169,23 +192,24 @@ func (g *Graph) Bfs(start int) (int, int) {
 		verticesProcessed++
 	}
 
-	initializeSearch()
+	s := newSearch(g)
+
 	queue.Enqueue(start)
-	discovered[start] = true
+	s.discovered[start] = true
 
 	for !queue.IsEmpty() {
 		v = *queue.Dequeue()
 		processEarly(v)
-		processed[v] = true
+		s.processed[v] = true
 		tmpNode = g.Edges[v]
 		for tmpNode != nil {
 			y = tmpNode.Y
-			if processed[y] == false || g.Directed {
+			if s.processed[y] == false || g.Directed {
 				processEdge(v, y)
 			}
-			if discovered[y] == false {
+			if s.discovered[y] == false {
 				queue.Enqueue(y)
-				discovered[y] = true
+				s.discovered[y] = true
 				parent[y] = v
 			}
 			tmpNode = tmpNode.Next
