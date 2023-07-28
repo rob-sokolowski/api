@@ -1,4 +1,4 @@
-module github.com/rob-sokolowski/cors-proxy
+module github.com/rob-sokolowski/api
 
 go 1.20
 
