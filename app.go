@@ -7,7 +7,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
-	"github.com/rob-sokolowski/cors-proxy/lib"
+	"github.com/rob-sokolowski/api/lib"
 	"io"
 	"net/url"
 
