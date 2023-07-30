@@ -90,7 +90,7 @@ func TestQueue(t *testing.T) {
 	}
 
 	if !q.IsEmpty() {
-		t.Errorf("Queue should empty, but reported was reported as nonempty")
+		t.Errorf("Queue should empty, but was reported as nonempty")
 	}
 }
 
