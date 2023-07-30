@@ -41,7 +41,44 @@ func (q *Queue[T]) IsEmpty() bool {
 	return len(q.Elements) == 0
 }
 
-// end regions: queue implementation
+// end region: queue implementation
+// begin region: stack implementation
+
+// Stack is your textbook FILO data structure
+type Stack[T any] struct {
+	Elements []*T
+}
+
+// NewStack allocates memory for a stack
+func NewStack[T any](cap int) *Stack[T] {
+	return &Stack[T]{
+		Elements: make([]*T, 0, cap),
+	}
+}
+
+// Push an element atop the stack
+func (s *Stack[T]) Push(e T) {
+	s.Elements = append(s.Elements, &e)
+}
+
+// Pop returns the first value on the stack, removing it from the stack
+func (s *Stack[T]) Pop() *T {
+	el := s.Elements[len(s.Elements)-1]
+	s.Elements = s.Elements[0 : len(s.Elements)-1]
+	return el
+}
+
+// Peek returns the first value on the stack, keeping it on the stack
+func (s *Stack[T]) Peek() *T {
+	return s.Elements[len(s.Elements)-1]
+}
+
+// IsEmpty returns true if the stack has no elements, false otherwise
+func (s *Stack[T]) IsEmpty() bool {
+	return len(s.Elements) == 0
+}
+
+// end region: stack implementation
 
 // I think this could/should be dynamically set, but I'm following the book as-is
 const maxVertices = 1000

@@ -93,3 +93,35 @@ func TestQueue(t *testing.T) {
 		t.Errorf("Queue should empty, but reported was reported as nonempty")
 	}
 }
+
+// TestStack tests stack behavior. Peek() does not modify the stack, but returns the top value
+// as Pop() does modify. Push() pushes an element atop the stack
+func TestStack(t *testing.T) {
+	s := NewStack[string](10)
+
+	s.Push("a")
+	s.Push("b")
+
+	p1 := s.Peek()
+	if *p1 != "b" {
+		t.Errorf("Expected b got %s", *p1)
+	}
+
+	p2 := s.Pop()
+	if *p2 != "b" {
+		t.Errorf("Expected b got %s", *p2)
+	}
+
+	if s.IsEmpty() {
+		t.Error("Expected non-empty, but reported empty")
+	}
+
+	p3 := s.Pop()
+	if *p3 != "a" {
+		t.Errorf("Expected a got %s", *p3)
+	}
+
+	if !s.IsEmpty() {
+		t.Error("Expected empty, got non-empty")
+	}
+}
