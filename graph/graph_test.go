@@ -1,6 +1,7 @@
 package graph
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -22,9 +23,9 @@ func TestNewGraph(t *testing.T) {
 }
 
 // TestReadFromFile tests the construction of a graph, using the "skeina_graph" format.
-// Note that this is also indirectly testing InsertEdge, which is called by ReadFromFile
+// Note that this is also indirectly testing InsertEdge, which is called by GraphFromFile
 func TestReadFromFile(t *testing.T) {
-	g, err := ReadFromFile("./test_example_1.skeina_graph", true)
+	g, err := GraphFromFile("./test_example_1.skeina_graph", true)
 	if err != nil {
 		t.Error("error when success expected")
 	}
@@ -44,7 +45,7 @@ func TestReadFromFile(t *testing.T) {
 
 // TestBfs tests the breadth-first algorithm
 func TestBfs(t *testing.T) {
-	g, _ := ReadFromFile("./fig_5_9.skeina_graph", true)
+	g, _ := GraphFromFile("./fig_5_9.skeina_graph", true)
 	nVertices, nEdges := g.Bfs(1)
 
 	// TODO: I think it's working, but unsure of better assertion criteria
@@ -124,4 +125,17 @@ func TestStack(t *testing.T) {
 	if !s.IsEmpty() {
 		t.Error("Expected empty, got non-empty")
 	}
+}
+
+func TestDfs(t *testing.T) {
+	g, _ := GraphFromFile("./fig_5_9.skeina_graph", false)
+	s, _ := g.Dfs(1)
+
+	// TODO: Better test criteria??
+	for i := 1; i <= 6; i++ {
+		if s.processed[i] == false {
+			t.Errorf("Expected node %d to be processed, but wasn't", i)
+		}
+	}
+	fmt.Println(g, s)
 }
