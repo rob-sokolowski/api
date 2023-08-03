@@ -7,6 +7,11 @@ services:
       - ci.env
     command: go test ./...
 
+  api:
+    image: site-api:local
+    env_file:
+      - ci.env
+
 networks:
   api-ci-network:
     driver: bridge
