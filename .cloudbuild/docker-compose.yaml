@@ -1,0 +1,14 @@
+version: "3.3"
+
+services:
+  go-tests:
+    image: gcr.io/fir-sandbox-326008/api:ci
+    env_file:
+      - ci.env
+    command: go test ./...
+
+networks:
+  api-ci-network:
+    driver: bridge
+    ipam:
+      driver: default
