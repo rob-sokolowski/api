@@ -1,24 +1,11 @@
 version: "3.3"
 
 services:
-  pytest-internal-tests:
-    image: gcr.io/fir-sandbox-326008/fir-api:ci
+  go-tests:
+    image: gcr.io/fir-sandbox-326008/api:ci
     env_file:
       - ci.env
-    command: pytest ./tests/internal_tests/
-
-  api-gunicorn:
-    image: gcr.io/fir-sandbox-326008/fir-api:ci
-    container_name: "api-gunicorn"  # used for docker-network namespacing, for API tests
-    env_file:
-      - ci.env
-    command: gunicorn --workers 2 --timeout 3600 --worker-class uvicorn.workers.UvicornWorker -b 0.0.0.0:8080 api.server:app
-
-  pytest-http-tests:
-    image: gcr.io/fir-sandbox-326008/fir-api:ci
-    env_file:
-      - ci.env
-    command: pytest ./tests/api_tests/
+    command: go test
 
 networks:
   api-ci-network:

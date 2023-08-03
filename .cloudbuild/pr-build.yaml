@@ -6,7 +6,7 @@ steps:
 
   - name: 'docker/compose:1.29.2'
     dir: '.cloudbuild'
-    args: ['run', 'go test']
+    args: ['run', 'go-tests']
 
   # bring things down
   - name: 'docker/compose:1.29.2'
