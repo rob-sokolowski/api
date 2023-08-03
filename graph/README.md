@@ -1,5 +1,11 @@
-Goal:
+### Graph module
 
-Make a basic, in-memory property graph, inspired by Neo4J. Then build
-a simple cypher QL parser / query feature. I do not expect to be fully
-compliant to cypher queries, just want basic matching.
+Goals:
+ * to learn about graphs, and apply learnings to my [bigger project](https://fir-sandbox-2.lamdera.app/)
+ * to make a basic in-memory property graph, inpsired by Neo4J
+ * to make a simple Cypher-like DSL to query the graph
+
+Non-goals:
+ * to make a module with even a semblance of production readiness
+ * to comply to Cypher/Neo4J standards
+ * to write "good code"
