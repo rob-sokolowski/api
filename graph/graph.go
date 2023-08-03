@@ -152,7 +152,7 @@ func ReadFromFile(filename string, directed bool) (g *Graph, err error) {
 // For example, two cliques without any mutual friends between any members would
 // result in two. Two cliques where just one member from each know each other would be one.
 func (g *Graph) ConnectedComponents() int {
-	s := newSearch(g)
+	s := newBfsSearch(g)
 	c := 0
 
 	for i := 0; i < g.NVertices; i++ {
@@ -163,6 +163,49 @@ func (g *Graph) ConnectedComponents() int {
 	}
 
 	return c
+}
+
+func (g *Graph) Dfs(v int) {
+	s := newDfsSearch(g)
+	dfs_(g, v, s)
+}
+
+func dfsProcessVertexEarly(v int) {
+	fmt.Print("processVertexEarly %d", v)
+}
+
+func dfsProcessVertexLate(v int) {
+	fmt.Println("processVertexLate %d", v)
+}
+
+func dfsProcessEdge(v, y int) {
+	fmt.Println("processEdge %d, %d", v, y)
+}
+
+// dfs_
+// TODO: Does GoLang support tail-optimization for recursive funcs??
+func dfs_(g *Graph, v int, s *dfsSearchHelp) {
+	var p *EdgeNode
+	var y int
+
+	s.discovered[v] = true
+	s.time++
+	s.entryTimes[v] = s.time
+
+	dfsProcessVertexEarly(v)
+
+	p = g.Edges[v]
+	for p != nil {
+		y = p.Y
+		if s.discovered[y] == false {
+			s.parents[y] = v
+			dfsProcessEdge(v, y)
+			dfs_(g, y, s)
+		} else if !s.
+
+
+
+	}
 }
 
 // InsertEdge inserts an edge into the graph. If directed the is will be from lhs to rhs, otherwise two
@@ -187,17 +230,40 @@ func (g *Graph) InsertEdge(lhs, rhs int, directed bool) (err error) {
 	return nil
 }
 
-type searchHelper struct {
+type bfsSearchHelp struct {
 	graph      *Graph
 	processed  []bool
 	discovered []bool
 }
 
-func newSearch(g *Graph) *searchHelper {
-	return &searchHelper{
+func newBfsSearch(g *Graph) *bfsSearchHelp {
+	return &bfsSearchHelp{
 		graph:      g,
 		processed:  make([]bool, maxVertices+1),
 		discovered: make([]bool, maxVertices+1),
+	}
+}
+
+type dfsSearchHelp struct {
+	discovered []bool
+	time       int
+	entryTimes []int
+	parents    []int
+	exitTimes []int
+	processed []bool
+}
+
+func newDfsSearch(g *Graph) *dfsSearchHelp {
+	// TODO: I think maxVertices should belong to the graph object and not this module???
+	fmt.Println(g)
+
+	return &dfsSearchHelp{
+		discovered: make([]bool, maxVertices+1),
+		time:       0,
+		entryTimes: make([]int, maxVertices+1),
+		parents:    make([]int, maxVertices+1),
+		exitTimes: make([]int, maxVertices+1),
+		processed: make([]bool, maxVertices+1),
 	}
 }
 
@@ -223,7 +289,7 @@ func (g *Graph) Bfs(start int) (int, int) {
 		verticesProcessed++
 	}
 
-	s := newSearch(g)
+	s := newBfsSearch(g)
 
 	queue.Enqueue(start)
 	s.discovered[start] = true
