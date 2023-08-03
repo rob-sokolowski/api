@@ -5,7 +5,7 @@ services:
     image: gcr.io/fir-sandbox-326008/api:ci
     env_file:
       - ci.env
-    command: go test
+    command: go test ./...
 
 networks:
   api-ci-network:

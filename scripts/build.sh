@@ -14,3 +14,5 @@ docker build \
   -t api:local-ci \
   --file .cloudbuild/Dockerfile-Ci \
   .
+
+docker tag api:local-ci gcr.io/fir-sandbox-326008/api:ci
