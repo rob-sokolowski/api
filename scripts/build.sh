@@ -5,13 +5,13 @@
 
 # For local testing of the slimmed, deployed image
 docker build \
-  -t api:local \
+  -t site-api:local \
   --file .cloudbuild/Dockerfile \
   .
 
 # For local testing of the CI process
 docker build \
-  -t api:local-ci \
+  -t site-api:local-ci \
   --file .cloudbuild/Dockerfile-Ci \
   .
 
