@@ -138,8 +138,4 @@ func TestDfs(t *testing.T) {
 		}
 	}
 	fmt.Println(g, s)
-
-	if 1 == 1 {
-		t.Errorf("This is a test!")
-	}
 }
