@@ -1,0 +1,18 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    id: Build CI image
+    dir: './'
+    args: ['build', '-t', 'gcr.io/fir-sandbox-326008/api:ci', '--file', '.cloudbuild/Dockerfile-Ci', '.']
+
+  - name: 'docker/compose:1.29.2'
+    dir: '.cloudbuild'
+    args: ['run', 'go test']
+
+  # bring things down
+  - name: 'docker/compose:1.29.2'
+    dir: '.cloudbuild'
+    args: ['down']
+
+options:
+  pool:
+    name: 'projects/fir-sandbox-326008/locations/us-east4/workerPools/pool-1'
