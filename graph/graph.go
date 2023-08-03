@@ -106,14 +106,14 @@ func NewGraph(directed bool) (g *Graph, err error) {
 	return g, nil
 }
 
-// ReadFromFile reads a graph from a file
+// GraphFromFile reads a graph from a file
 // Note the book example reads from user-supplied stdin. I'm following the same formatting, but instead reading from a file
 //
 // The format of the file is:
 // The 1st line has two integers, n and m, which are the number of vertices and edges, respectively.
 // The next m lines contain the edges; each two integers, x and y, the vertices of the edge
-func ReadFromFile(filename string, directed bool) (g *Graph, err error) {
-	g, err = NewGraph(true)
+func GraphFromFile(filename string, directed bool) (g *Graph, err error) {
+	g, err = NewGraph(directed)
 	if err != nil {
 		return nil, err
 	}
@@ -165,28 +165,33 @@ func (g *Graph) ConnectedComponents() int {
 	return c
 }
 
-func (g *Graph) Dfs(v int) {
+func (g *Graph) Dfs(v int) (*DfsSearch, error) {
 	s := newDfsSearch(g)
-	dfs_(g, v, s)
+	return dfs_(g, v, s)
 }
 
 func dfsProcessVertexEarly(v int) {
-	fmt.Print("processVertexEarly %d", v)
+	fmt.Printf("processVertexEarly %d", v)
 }
 
 func dfsProcessVertexLate(v int) {
-	fmt.Println("processVertexLate %d", v)
+	fmt.Printf("processVertexLate %d", v)
 }
 
 func dfsProcessEdge(v, y int) {
-	fmt.Println("processEdge %d, %d", v, y)
+	fmt.Printf("processEdge %d, %d", v, y)
 }
 
 // dfs_
 // TODO: Does GoLang support tail-optimization for recursive funcs??
-func dfs_(g *Graph, v int, s *dfsSearchHelp) {
+func dfs_(g *Graph, v int, s *DfsSearch) (*DfsSearch, error) {
 	var p *EdgeNode
 	var y int
+
+	if false {
+		// TODO: Where does finished come from?
+		return s, nil
+	}
 
 	s.discovered[v] = true
 	s.time++
@@ -201,11 +206,23 @@ func dfs_(g *Graph, v int, s *dfsSearchHelp) {
 			s.parents[y] = v
 			dfsProcessEdge(v, y)
 			dfs_(g, y, s)
-		} else if !s.
+		} else if (!s.processed[y] && s.parents[v] != y) || g.Directed {
+			dfsProcessEdge(v, y)
+		}
 
+		if false {
+			// TODO: Where does finished come from?
+			return s, nil
+		}
 
-
+		p = p.Next
 	}
+	dfsProcessVertexLate(v)
+
+	s.time++
+	s.exitTimes[v] = s.time
+	s.processed[v] = true
+	return s, nil
 }
 
 // InsertEdge inserts an edge into the graph. If directed the is will be from lhs to rhs, otherwise two
@@ -244,26 +261,26 @@ func newBfsSearch(g *Graph) *bfsSearchHelp {
 	}
 }
 
-type dfsSearchHelp struct {
+type DfsSearch struct {
 	discovered []bool
 	time       int
 	entryTimes []int
 	parents    []int
-	exitTimes []int
-	processed []bool
+	exitTimes  []int
+	processed  []bool
 }
 
-func newDfsSearch(g *Graph) *dfsSearchHelp {
+func newDfsSearch(g *Graph) *DfsSearch {
 	// TODO: I think maxVertices should belong to the graph object and not this module???
 	fmt.Println(g)
 
-	return &dfsSearchHelp{
+	return &DfsSearch{
 		discovered: make([]bool, maxVertices+1),
 		time:       0,
 		entryTimes: make([]int, maxVertices+1),
 		parents:    make([]int, maxVertices+1),
-		exitTimes: make([]int, maxVertices+1),
-		processed: make([]bool, maxVertices+1),
+		exitTimes:  make([]int, maxVertices+1),
+		processed:  make([]bool, maxVertices+1),
 	}
 }
 
