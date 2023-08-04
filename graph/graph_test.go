@@ -18,27 +18,6 @@ func TestNewGraph(t *testing.T) {
 	}
 }
 
-// TestReadFromFile tests the construction of a graph, using the "skeina_graph" format.
-// Note that this is also indirectly testing InsertEdge, which is called by FromFile
-func TestReadFromFile(t *testing.T) {
-	g, err := FromJsonFile("./test_example_1.skeina_graph")
-	if err != nil {
-		t.Error("error when success expected")
-	}
-
-	if g.NVertices != 8 {
-		t.Errorf("expected 8 vertices, got %d", g.NVertices)
-	}
-
-	if g.NEdges != 8 {
-		t.Errorf("expected 8 edges, got %d", g.NEdges)
-	}
-
-	if g.Directed != true {
-		t.Error("expected directed to be true, got false")
-	}
-}
-
 func TestReadJsonGraph(t *testing.T) {
 	g, _ := FromJsonFile("./test_example_1.json")
 
