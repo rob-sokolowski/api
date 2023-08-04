@@ -23,9 +23,9 @@ func TestNewGraph(t *testing.T) {
 }
 
 // TestReadFromFile tests the construction of a graph, using the "skeina_graph" format.
-// Note that this is also indirectly testing InsertEdge, which is called by GraphFromFile
+// Note that this is also indirectly testing InsertEdge, which is called by FromFile
 func TestReadFromFile(t *testing.T) {
-	g, err := GraphFromFile("./test_example_1.skeina_graph", true)
+	g, err := FromFile("./test_example_1.skeina_graph", true)
 	if err != nil {
 		t.Error("error when success expected")
 	}
@@ -45,15 +45,17 @@ func TestReadFromFile(t *testing.T) {
 
 // TestBfs tests the breadth-first algorithm
 func TestBfs(t *testing.T) {
-	g, _ := GraphFromFile("./fig_5_9.skeina_graph", true)
-	nVertices, nEdges := g.Bfs(1)
+	g, _ := FromFile("./fig_5_9.skeina_graph", false)
+	crawlResult := new(CrawlerCounter)
+
+	g.Bfs(1, crawlResult)
 
 	// TODO: I think it's working, but unsure of better assertion criteria
-	if nVertices != 6 {
-		t.Errorf("Expected nVertices to be 6, got %d", nVertices)
+	if crawlResult.NVerticesProcessedEarly != 6 {
+		t.Errorf("Expected nVertices to be 6, got %d", crawlResult.NVerticesProcessedEarly)
 	}
-	if nEdges != 7 {
-		t.Errorf("Expected nEdges to be 7, got %d", nEdges)
+	if crawlResult.NEdgesProcessed != 6 {
+		t.Errorf("Expected nEdges to be 6, got %d", crawlResult.NEdgesProcessed)
 	}
 }
 
@@ -128,8 +130,9 @@ func TestStack(t *testing.T) {
 }
 
 func TestDfs(t *testing.T) {
-	g, _ := GraphFromFile("./fig_5_9.skeina_graph", false)
-	s, _ := g.Dfs(1)
+	g, _ := FromFile("./fig_5_9.skeina_graph", false)
+	crawlResult := new(CrawlerCounter)
+	s, _ := g.Dfs(1, crawlResult)
 
 	// TODO: Better test criteria??
 	for i := 1; i <= 6; i++ {
