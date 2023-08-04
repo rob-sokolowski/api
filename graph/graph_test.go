@@ -7,11 +7,7 @@ import (
 
 // TestNewGraph tests the allocation of memory for a new graph
 func TestNewGraph(t *testing.T) {
-	g, err := NewGraph(true)
-
-	if err != nil {
-		t.Errorf("error when initializing graph %s", err)
-	}
+	g := NewGraph(true)
 
 	if g.Directed != true {
 		t.Errorf("expected Directed to be true, got %t", g.Directed)
@@ -22,30 +18,24 @@ func TestNewGraph(t *testing.T) {
 	}
 }
 
-// TestReadFromFile tests the construction of a graph, using the "skeina_graph" format.
-// Note that this is also indirectly testing InsertEdge, which is called by FromFile
-func TestReadFromFile(t *testing.T) {
-	g, err := FromFile("./test_example_1.skeina_graph", true)
-	if err != nil {
-		t.Error("error when success expected")
-	}
+func TestReadJsonGraph(t *testing.T) {
+	g, _ := FromJsonFile("./test_example_1.json")
 
 	if g.NVertices != 8 {
 		t.Errorf("expected 8 vertices, got %d", g.NVertices)
 	}
-
 	if g.NEdges != 8 {
 		t.Errorf("expected 8 edges, got %d", g.NEdges)
 	}
-
-	if g.Directed != true {
-		t.Error("expected directed to be true, got false")
+	if g.Directed != false {
+		t.Errorf("expected undirected, got directed")
 	}
+
 }
 
 // TestBfs tests the breadth-first algorithm
 func TestBfs(t *testing.T) {
-	g, _ := FromFile("./fig_5_9.skeina_graph", false)
+	g, _ := FromJsonFile("./fig_5_9.json")
 	crawlResult := new(CrawlerCounter)
 
 	g.Bfs(1, crawlResult)
@@ -130,7 +120,7 @@ func TestStack(t *testing.T) {
 }
 
 func TestDfs(t *testing.T) {
-	g, _ := FromFile("./fig_5_9.skeina_graph", false)
+	g, _ := FromJsonFile("./fig_5_9.json")
 	crawlResult := new(CrawlerCounter)
 	s, _ := g.Dfs(1, crawlResult)
 
