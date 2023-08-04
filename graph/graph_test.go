@@ -21,7 +21,7 @@ func TestNewGraph(t *testing.T) {
 // TestReadFromFile tests the construction of a graph, using the "skeina_graph" format.
 // Note that this is also indirectly testing InsertEdge, which is called by FromFile
 func TestReadFromFile(t *testing.T) {
-	g, err := FromFile("./test_example_1.skeina_graph", true)
+	g, err := FromJsonFile("./test_example_1.skeina_graph")
 	if err != nil {
 		t.Error("error when success expected")
 	}
@@ -56,7 +56,7 @@ func TestReadJsonGraph(t *testing.T) {
 
 // TestBfs tests the breadth-first algorithm
 func TestBfs(t *testing.T) {
-	g, _ := FromFile("./fig_5_9.skeina_graph", false)
+	g, _ := FromJsonFile("./fig_5_9.json")
 	crawlResult := new(CrawlerCounter)
 
 	g.Bfs(1, crawlResult)
@@ -141,7 +141,7 @@ func TestStack(t *testing.T) {
 }
 
 func TestDfs(t *testing.T) {
-	g, _ := FromFile("./fig_5_9.skeina_graph", false)
+	g, _ := FromJsonFile("./fig_5_9.json")
 	crawlResult := new(CrawlerCounter)
 	s, _ := g.Dfs(1, crawlResult)
 

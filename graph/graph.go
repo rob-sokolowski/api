@@ -4,9 +4,7 @@
 package graph
 
 import (
-	"bufio"
 	"encoding/json"
-	"fmt"
 	"os"
 )
 
@@ -132,46 +130,6 @@ func FromJsonFile(path string) (*Graph, error) {
 		if err != nil {
 			return nil, err
 		}
-	}
-
-	return g, nil
-}
-
-// FromFile reads a graph from a file
-// Note the book example reads from user-supplied stdin. I'm following the same formatting, but instead reading from a file
-//
-// The format of the file is:
-// The 1st line has two integers, n and m, which are the number of vertices and edges, respectively.
-// The next m lines contain the edges; each two integers, x and y, the vertices of the edge
-func FromFile(filename string, directed bool) (*Graph, error) {
-	g := NewGraph(directed)
-
-	f, err := os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-
-	scanner := bufio.NewScanner(f)
-	scanner.Split(bufio.ScanLines)
-
-	i := 0
-	for scanner.Scan() {
-		var lhs, rhs int
-		line := scanner.Text()
-		// First line sets vertex / edge count, the rest are edges
-		if i == 0 {
-			var m int
-			_, err = fmt.Sscanf(line, "%d %d", &g.NVertices, &m)
-		} else {
-			_, err = fmt.Sscanf(line, "%d %d", &lhs, &rhs)
-			err = g.InsertEdge(lhs, rhs, directed)
-		}
-
-		if err != nil {
-			return nil, err
-		}
-		i++
 	}
 
 	return g, nil
