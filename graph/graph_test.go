@@ -7,11 +7,7 @@ import (
 
 // TestNewGraph tests the allocation of memory for a new graph
 func TestNewGraph(t *testing.T) {
-	g, err := NewGraph(true)
-
-	if err != nil {
-		t.Errorf("error when initializing graph %s", err)
-	}
+	g := NewGraph(true)
 
 	if g.Directed != true {
 		t.Errorf("expected Directed to be true, got %t", g.Directed)
@@ -41,6 +37,21 @@ func TestReadFromFile(t *testing.T) {
 	if g.Directed != true {
 		t.Error("expected directed to be true, got false")
 	}
+}
+
+func TestReadJsonGraph(t *testing.T) {
+	g, _ := FromJsonFile("./test_example_1.json")
+
+	if g.NVertices != 8 {
+		t.Errorf("expected 8 vertices, got %d", g.NVertices)
+	}
+	if g.NEdges != 8 {
+		t.Errorf("expected 8 edges, got %d", g.NEdges)
+	}
+	if g.Directed != false {
+		t.Errorf("expected undirected, got directed")
+	}
+
 }
 
 // TestBfs tests the breadth-first algorithm

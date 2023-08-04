@@ -5,6 +5,7 @@ package graph
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"os"
 )
@@ -98,11 +99,40 @@ type Graph struct {
 	Directed  bool
 }
 
-func NewGraph(directed bool) (g *Graph, err error) {
+func NewGraph(directed bool) (g *Graph) {
 	g = new(Graph)
-	g.NVertices = 0
-	g.NEdges = 0
 	g.Directed = directed
+	return g
+}
+
+type JsonGraph struct {
+	NVertices int     `json:"nVertices"`
+	Directed  bool    `json:"directed"`
+	Edges     [][]int `json:"edges"`
+}
+
+func FromJsonFile(path string) (*Graph, error) {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	// Now let's unmarshall the data into `payload`
+	var payload JsonGraph
+	err = json.Unmarshal(content, &payload)
+	if err != nil {
+		return nil, err
+	}
+
+	g := NewGraph(payload.Directed)
+	g.NVertices = payload.NVertices
+
+	for _, edge := range payload.Edges {
+		err := g.InsertEdge(edge[0], edge[1], payload.Directed)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	return g, nil
 }
@@ -113,11 +143,8 @@ func NewGraph(directed bool) (g *Graph, err error) {
 // The format of the file is:
 // The 1st line has two integers, n and m, which are the number of vertices and edges, respectively.
 // The next m lines contain the edges; each two integers, x and y, the vertices of the edge
-func FromFile(filename string, directed bool) (g *Graph, err error) {
-	g, err = NewGraph(directed)
-	if err != nil {
-		return nil, err
-	}
+func FromFile(filename string, directed bool) (*Graph, error) {
+	g := NewGraph(directed)
 
 	f, err := os.Open(filename)
 	if err != nil {
@@ -134,7 +161,8 @@ func FromFile(filename string, directed bool) (g *Graph, err error) {
 		line := scanner.Text()
 		// First line sets vertex / edge count, the rest are edges
 		if i == 0 {
-			_, err = fmt.Sscanf(line, "%d %d", &g.NVertices, &g.NEdges)
+			var m int
+			_, err = fmt.Sscanf(line, "%d %d", &g.NVertices, &m)
 		} else {
 			_, err = fmt.Sscanf(line, "%d %d", &lhs, &rhs)
 			err = g.InsertEdge(lhs, rhs, directed)
@@ -164,8 +192,8 @@ func (g *Graph) InsertEdge(lhs, rhs int, directed bool) (err error) {
 	if directed == false {
 		err = g.InsertEdge(rhs, lhs, true)
 	} else {
-		// TODO: I'm not sure about this.. why are directed edges doubly counted?
-		//g.NEdges++
+		// increment edge count, note that for undirected case we do not double count
+		g.NEdges++
 	}
 
 	return nil
