@@ -18,6 +18,12 @@ func TestNewGraph(t *testing.T) {
 	}
 }
 
+func TestReadFromJsonGraph2(t *testing.T) {
+	g, _ := FromJsonFile2("./test_example_1.json")
+
+	fmt.Println(g)
+}
+
 func TestReadJsonGraph(t *testing.T) {
 	g, _ := FromJsonFile("./test_example_1.json")
 
@@ -30,7 +36,6 @@ func TestReadJsonGraph(t *testing.T) {
 	if g.Directed != false {
 		t.Errorf("expected undirected, got directed")
 	}
-
 }
 
 // TestBfs tests the breadth-first algorithm

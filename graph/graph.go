@@ -89,6 +89,46 @@ type EdgeNode struct {
 	Next   *EdgeNode
 }
 
+type Val = int
+
+type Node struct {
+	id  int
+	val Val
+}
+
+type Edge struct {
+	src    int
+	dest   int
+	weight *float32
+}
+
+type Graph2 struct {
+	nodes    map[Node]bool
+	edges    map[Edge]bool
+	directed bool
+}
+
+func (g *Graph2) addNode(newNode Node) {
+	g.nodes[newNode] = true
+}
+
+func (g *Graph2) addEdge(src int, dest int) {
+	e := Edge{
+		src:  src,
+		dest: dest,
+	}
+
+	if !g.directed {
+		f := Edge{
+			src:  dest,
+			dest: src,
+		}
+		g.edges[f] = true
+	}
+
+	g.edges[e] = true
+}
+
 type Graph struct {
 	Edges     [maxVertices + 1]*EdgeNode
 	Degree    [maxVertices + 1]int
@@ -107,6 +147,40 @@ type JsonGraph struct {
 	NVertices int     `json:"nVertices"`
 	Directed  bool    `json:"directed"`
 	Edges     [][]int `json:"edges"`
+}
+
+func FromJsonFile2(path string) (*Graph2, error) {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	// Now let's unmarshall the data into `payload`
+	var payload JsonGraph
+	err = json.Unmarshal(content, &payload)
+	if err != nil {
+		return nil, err
+	}
+
+	g := Graph2{
+		edges:    make(map[Edge]bool, 1000),
+		nodes:    make(map[Node]bool, 1000),
+		directed: payload.Directed,
+	}
+	// insert edge
+	for _, edge := range payload.Edges {
+		g.addEdge(edge[0], edge[1])
+	}
+
+	// insert nodes
+	for i := 1; i <= payload.NVertices; i++ {
+		node := Node{
+			id:  i,
+			val: i,
+		}
+		g.nodes[node] = true
+	}
+
+	return &g, nil
 }
 
 func FromJsonFile(path string) (*Graph, error) {
