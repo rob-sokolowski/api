@@ -107,13 +107,13 @@ func NewGraph(directed bool) (g *Graph, err error) {
 	return g, nil
 }
 
-// GraphFromFile reads a graph from a file
+// FromFile reads a graph from a file
 // Note the book example reads from user-supplied stdin. I'm following the same formatting, but instead reading from a file
 //
 // The format of the file is:
 // The 1st line has two integers, n and m, which are the number of vertices and edges, respectively.
 // The next m lines contain the edges; each two integers, x and y, the vertices of the edge
-func GraphFromFile(filename string, directed bool) (g *Graph, err error) {
+func FromFile(filename string, directed bool) (g *Graph, err error) {
 	g, err = NewGraph(directed)
 	if err != nil {
 		return nil, err
