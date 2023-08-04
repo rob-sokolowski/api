@@ -80,6 +80,7 @@ func (s *Stack[T]) IsEmpty() bool {
 
 // end region: stack implementation
 
+// begin region: graph structure
 // I think this could/should be dynamically set, but I'm following the book as-is
 const maxVertices = 1000
 
@@ -148,83 +149,6 @@ func GraphFromFile(filename string, directed bool) (g *Graph, err error) {
 	return g, nil
 }
 
-// ConnectedComponents counts the distinct maximal components of a graph.
-// For example, two cliques without any mutual friends between any members would
-// result in two. Two cliques where just one member from each know each other would be one.
-func (g *Graph) ConnectedComponents() int {
-	s := newBfsSearch(g)
-	c := 0
-
-	for i := 0; i < g.NVertices; i++ {
-		if s.discovered[i] == false {
-			c++
-			g.Bfs(i)
-		}
-	}
-
-	return c
-}
-
-func (g *Graph) Dfs(v int) (*DfsSearch, error) {
-	s := newDfsSearch(g)
-	return dfs_(g, v, s)
-}
-
-func dfsProcessVertexEarly(v int) {
-	fmt.Printf("processVertexEarly %d", v)
-}
-
-func dfsProcessVertexLate(v int) {
-	fmt.Printf("processVertexLate %d", v)
-}
-
-func dfsProcessEdge(v, y int) {
-	fmt.Printf("processEdge %d, %d", v, y)
-}
-
-// dfs_
-// TODO: Does GoLang support tail-optimization for recursive funcs??
-func dfs_(g *Graph, v int, s *DfsSearch) (*DfsSearch, error) {
-	var p *EdgeNode
-	var y int
-
-	if false {
-		// TODO: Where does finished come from?
-		return s, nil
-	}
-
-	s.discovered[v] = true
-	s.time++
-	s.entryTimes[v] = s.time
-
-	dfsProcessVertexEarly(v)
-
-	p = g.Edges[v]
-	for p != nil {
-		y = p.Y
-		if s.discovered[y] == false {
-			s.parents[y] = v
-			dfsProcessEdge(v, y)
-			dfs_(g, y, s)
-		} else if (!s.processed[y] && s.parents[v] != y) || g.Directed {
-			dfsProcessEdge(v, y)
-		}
-
-		if false {
-			// TODO: Where does finished come from?
-			return s, nil
-		}
-
-		p = p.Next
-	}
-	dfsProcessVertexLate(v)
-
-	s.time++
-	s.exitTimes[v] = s.time
-	s.processed[v] = true
-	return s, nil
-}
-
 // InsertEdge inserts an edge into the graph. If directed the is will be from lhs to rhs, otherwise two
 // edges will be inserted, one from lhs to rhs and one from rhs to lhs
 func (g *Graph) InsertEdge(lhs, rhs int, directed bool) (err error) {
@@ -245,6 +169,90 @@ func (g *Graph) InsertEdge(lhs, rhs int, directed bool) (err error) {
 	}
 
 	return nil
+}
+
+// end region: graph structure
+
+// ConnectedComponents counts the distinct maximal components of a graph.
+// For example, two cliques without any mutual friends between any members would
+// result in two. Two cliques where just one member from each know each other would be one.
+func (g *Graph) ConnectedComponents() int {
+	s := newBfsSearch(g)
+	c := 0
+	crawlResult := new(CrawlerCounter)
+
+	for i := 0; i < g.NVertices; i++ {
+		if s.discovered[i] == false {
+			c++
+			g.Bfs(i, crawlResult)
+		}
+	}
+
+	return c
+}
+
+func (g *Graph) Dfs(v int, crawler Crawler) (*DfsSearch, error) {
+	s := newDfsSearch(g)
+	return dfs_(g, v, s, crawler)
+}
+
+// Crawler provides processing instructions for searches on a graph
+// TODO: naming is hard, but sticking with Crawler for now
+type Crawler interface {
+	ProcessVertexEarly(int)
+	ProcessVertexLate(int)
+	ProcessEdge(int, int)
+}
+
+type CrawlerCounter struct {
+	NVerticesProcessedEarly int
+	NEdgesProcessed         int
+	NVerticesProcessedLate  int
+}
+
+func (r *CrawlerCounter) ProcessVertexEarly(v int) {
+	r.NVerticesProcessedEarly++
+}
+
+func (r *CrawlerCounter) ProcessVertexLate(v int) {
+	r.NEdgesProcessed++
+}
+
+func (r *CrawlerCounter) ProcessEdge(v, y int) {
+	r.NVerticesProcessedLate++
+}
+
+// dfs_
+// TODO: Does GoLang support tail-optimization for recursive funcs??
+func dfs_(g *Graph, v int, s *DfsSearch, crawler Crawler) (*DfsSearch, error) {
+	var p *EdgeNode
+	var y int
+
+	s.discovered[v] = true
+	s.time++
+	s.entryTimes[v] = s.time
+
+	crawler.ProcessVertexEarly(v)
+
+	p = g.Edges[v]
+	for p != nil {
+		y = p.Y
+		if s.discovered[y] == false {
+			s.parents[y] = v
+			crawler.ProcessEdge(v, y)
+			dfs_(g, y, s, crawler)
+		} else if (!s.processed[y] && s.parents[v] != y) || g.Directed {
+			crawler.ProcessEdge(v, y)
+		}
+
+		p = p.Next
+	}
+	crawler.ProcessVertexLate(v)
+
+	s.time++
+	s.exitTimes[v] = s.time
+	s.processed[v] = true
+	return s, nil
 }
 
 type bfsSearchHelp struct {
@@ -272,7 +280,6 @@ type DfsSearch struct {
 
 func newDfsSearch(g *Graph) *DfsSearch {
 	// TODO: I think maxVertices should belong to the graph object and not this module???
-	fmt.Println(g)
 
 	return &DfsSearch{
 		discovered: make([]bool, maxVertices+1),
@@ -285,7 +292,7 @@ func newDfsSearch(g *Graph) *DfsSearch {
 }
 
 // Bfs performs a breadth-first search over the Graph, starting at the node start
-func (g *Graph) Bfs(start int) (int, int) {
+func (g *Graph) Bfs(start int, crawler Crawler) (int, int) {
 	var parent [maxVertices + 1]int
 	var tmpNode *EdgeNode
 	var v int // current vertex
@@ -294,18 +301,6 @@ func (g *Graph) Bfs(start int) (int, int) {
 	verticesProcessed := 0
 	queue := NewQueue[int](10)
 
-	var processEarly = func(v int) {
-		// noop
-	}
-
-	var processEdge = func(v, y int) {
-		edgesProcessed++
-	}
-
-	var processLate = func(y int) {
-		verticesProcessed++
-	}
-
 	s := newBfsSearch(g)
 
 	queue.Enqueue(start)
@@ -313,13 +308,13 @@ func (g *Graph) Bfs(start int) (int, int) {
 
 	for !queue.IsEmpty() {
 		v = *queue.Dequeue()
-		processEarly(v)
+		crawler.ProcessVertexEarly(v)
 		s.processed[v] = true
 		tmpNode = g.Edges[v]
 		for tmpNode != nil {
 			y = tmpNode.Y
 			if s.processed[y] == false || g.Directed {
-				processEdge(v, y)
+				crawler.ProcessEdge(v, y)
 			}
 			if s.discovered[y] == false {
 				queue.Enqueue(y)
@@ -329,7 +324,7 @@ func (g *Graph) Bfs(start int) (int, int) {
 			tmpNode = tmpNode.Next
 		}
 
-		processLate(v)
+		crawler.ProcessVertexLate(v)
 	}
 
 	return verticesProcessed, edgesProcessed
