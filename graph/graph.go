@@ -5,6 +5,7 @@ package graph
 
 import (
 	"encoding/json"
+	mapset "github.com/deckarep/golang-set/v2"
 	"os"
 )
 
@@ -103,13 +104,17 @@ type Edge struct {
 }
 
 type Graph2 struct {
-	nodes    map[Node]bool
-	edges    map[Edge]bool
-	directed bool
+	Nodes    mapset.Set[Node]
+	Edges    mapset.Set[Edge]
+	Directed bool
 }
 
 func (g *Graph2) addNode(newNode Node) {
-	g.nodes[newNode] = true
+	g.Nodes.Add(newNode)
+}
+
+func (g *Graph2) removeNode(newNode Node) {
+	g.Nodes.Remove(newNode)
 }
 
 func (g *Graph2) addEdge(src int, dest int) {
@@ -118,15 +123,32 @@ func (g *Graph2) addEdge(src int, dest int) {
 		dest: dest,
 	}
 
-	if !g.directed {
+	if !g.Directed {
 		f := Edge{
 			src:  dest,
 			dest: src,
 		}
-		g.edges[f] = true
+		g.Edges.Add(f)
 	}
 
-	g.edges[e] = true
+	g.Edges.Add(e)
+}
+
+func (g *Graph2) removeEdge(src int, dest int) {
+	e := Edge{
+		src:  src,
+		dest: dest,
+	}
+
+	if !g.Directed {
+		f := Edge{
+			src:  dest,
+			dest: src,
+		}
+		g.Edges.Remove(f)
+	}
+
+	g.Edges.Remove(e)
 }
 
 type Graph struct {
@@ -146,8 +168,8 @@ func NewGraph(directed bool) (g *Graph) {
 // JsonGraph is a simple JSON format for describing a graph
 type JsonGraph struct {
 	NVertices int     `json:"nVertices"`
-	Directed  bool    `json:"directed"`
-	Edges     [][]int `json:"edges"`
+	Directed  bool    `json:"Directed"`
+	Edges     [][]int `json:"Edges"`
 }
 
 // FromJsonFile2 reads a JSON file with the schema of the JsonGraph struct,
@@ -165,16 +187,16 @@ func FromJsonFile2(path string) (*Graph2, error) {
 	}
 
 	g := Graph2{
-		edges:    make(map[Edge]bool, 1000),
-		nodes:    make(map[Node]bool, 1000),
-		directed: payload.Directed,
+		Edges:    mapset.NewSet[Edge](),
+		Nodes:    mapset.NewSet[Node](),
+		Directed: payload.Directed,
 	}
 	// insert edge
 	for _, edge := range payload.Edges {
 		g.addEdge(edge[0], edge[1])
 	}
 
-	// insert nodes
+	// insert Nodes
 	for i := 1; i <= payload.NVertices; i++ {
 		node := Node{
 			id:  i,
@@ -212,8 +234,8 @@ func FromJsonFile(path string) (*Graph, error) {
 	return g, nil
 }
 
-// InsertEdge inserts an edge into the graph. If directed the is will be from lhs to rhs, otherwise two
-// edges will be inserted, one from lhs to rhs and one from rhs to lhs
+// InsertEdge inserts an edge into the graph. If Directed the is will be from lhs to rhs, otherwise two
+// Edges will be inserted, one from lhs to rhs and one from rhs to lhs
 func (g *Graph) InsertEdge(lhs, rhs int, directed bool) (err error) {
 	p := new(EdgeNode)
 
