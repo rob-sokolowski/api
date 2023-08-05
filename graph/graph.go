@@ -143,12 +143,15 @@ func NewGraph(directed bool) (g *Graph) {
 	return g
 }
 
+// JsonGraph is a simple JSON format for describing a graph
 type JsonGraph struct {
 	NVertices int     `json:"nVertices"`
 	Directed  bool    `json:"directed"`
 	Edges     [][]int `json:"edges"`
 }
 
+// FromJsonFile2 reads a JSON file with the schema of the JsonGraph struct,
+// into a Graph2
 func FromJsonFile2(path string) (*Graph2, error) {
 	content, err := os.ReadFile(path)
 	if err != nil {
@@ -177,7 +180,7 @@ func FromJsonFile2(path string) (*Graph2, error) {
 			id:  i,
 			val: i,
 		}
-		g.nodes[node] = true
+		g.addNode(node)
 	}
 
 	return &g, nil
