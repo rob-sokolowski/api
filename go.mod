@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	cloud.google.com/go/secretmanager v1.10.1
+	github.com/deckarep/golang-set/v2 v2.3.1
 	github.com/go-chi/chi/v5 v5.0.8
 	github.com/go-chi/cors v1.2.1
 )
