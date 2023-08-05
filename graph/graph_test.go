@@ -18,6 +18,19 @@ func TestNewGraph(t *testing.T) {
 	}
 }
 
+func TestReadFromJsonGraph2(t *testing.T) {
+	g, _ := FromJsonFile2("./test_example_1.json")
+
+	// TODO: I think using a proper Set would allow for better test conditions, otherwise the lookups here are a bit funky
+	// For example, the zeroth entry could correspond to id 2
+	if len(g.nodes) != 8 {
+		t.Errorf("Expected 8 node entries, got %d", len(g.nodes))
+	}
+	if len(g.edges) != 16 {
+		t.Errorf("Expected 16 edge entries, got %d", len(g.edges))
+	}
+}
+
 func TestReadJsonGraph(t *testing.T) {
 	g, _ := FromJsonFile("./test_example_1.json")
 
@@ -30,7 +43,6 @@ func TestReadJsonGraph(t *testing.T) {
 	if g.Directed != false {
 		t.Errorf("expected undirected, got directed")
 	}
-
 }
 
 // TestBfs tests the breadth-first algorithm
