@@ -168,8 +168,8 @@ func NewGraph(directed bool) (g *Graph) {
 // JsonGraph is a simple JSON format for describing a graph
 type JsonGraph struct {
 	NVertices int     `json:"nVertices"`
-	Directed  bool    `json:"Directed"`
-	Edges     [][]int `json:"Edges"`
+	Directed  bool    `json:"directed"`
+	Edges     [][]int `json:"edges"`
 }
 
 // FromJsonFile2 reads a JSON file with the schema of the JsonGraph struct,

@@ -37,10 +37,10 @@ func TestReadJsonGraph(t *testing.T) {
 		t.Errorf("expected 8 vertices, got %d", g.NVertices)
 	}
 	if g.NEdges != 8 {
-		t.Errorf("expected 8 Edges, got %d", g.NEdges)
+		t.Errorf("expected 8 edges, got %d", g.NEdges)
 	}
 	if g.Directed != false {
-		t.Errorf("expected undirected, got Directed")
+		t.Errorf("expected undirected, got directed")
 	}
 }
 
