@@ -21,7 +21,6 @@ func TestNewGraph(t *testing.T) {
 func TestReadFromJsonGraph2(t *testing.T) {
 	g, _ := FromJsonFile2("./test_example_1.json")
 
-	fmt.Println(g)
 	if g.Edges.Cardinality() != 16 {
 		t.Errorf("Set of cardinality 16 expected, got %d", g.Edges.Cardinality())
 	}
