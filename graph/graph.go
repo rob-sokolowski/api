@@ -90,11 +90,9 @@ type EdgeNode struct {
 	Next   *EdgeNode
 }
 
-type Val = int
-
-type Node struct {
+type Node[T comparable] struct {
 	id  int
-	val Val
+	val T
 }
 
 type Edge struct {
@@ -103,21 +101,21 @@ type Edge struct {
 	weight *float32
 }
 
-type Graph2 struct {
-	Nodes    mapset.Set[Node]
+type Graph2[T comparable] struct {
+	Nodes    mapset.Set[Node[T]]
 	Edges    mapset.Set[Edge]
 	Directed bool
 }
 
-func (g *Graph2) addNode(newNode Node) {
+func (g *Graph2[T]) addNode(newNode Node[T]) {
 	g.Nodes.Add(newNode)
 }
 
-func (g *Graph2) removeNode(newNode Node) {
+func (g *Graph2[T]) removeNode(newNode Node[T]) {
 	g.Nodes.Remove(newNode)
 }
 
-func (g *Graph2) addEdge(src int, dest int) {
+func (g *Graph2[T]) addEdge(src int, dest int) {
 	e := Edge{
 		src:  src,
 		dest: dest,
@@ -134,7 +132,7 @@ func (g *Graph2) addEdge(src int, dest int) {
 	g.Edges.Add(e)
 }
 
-func (g *Graph2) removeEdge(src int, dest int) {
+func (g *Graph2[T]) removeEdge(src int, dest int) {
 	e := Edge{
 		src:  src,
 		dest: dest,
@@ -174,7 +172,7 @@ type JsonGraph struct {
 
 // FromJsonFile2 reads a JSON file with the schema of the JsonGraph struct,
 // into a Graph2
-func FromJsonFile2(path string) (*Graph2, error) {
+func FromJsonFile2(path string) (*Graph2[int], error) {
 	content, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
@@ -186,9 +184,9 @@ func FromJsonFile2(path string) (*Graph2, error) {
 		return nil, err
 	}
 
-	g := Graph2{
+	g := Graph2[int]{
 		Edges:    mapset.NewSet[Edge](),
-		Nodes:    mapset.NewSet[Node](),
+		Nodes:    mapset.NewSet[Node[int]](),
 		Directed: payload.Directed,
 	}
 	// insert edge
@@ -198,7 +196,7 @@ func FromJsonFile2(path string) (*Graph2, error) {
 
 	// insert Nodes
 	for i := 1; i <= payload.NVertices; i++ {
-		node := Node{
+		node := Node[int]{
 			id:  i,
 			val: i,
 		}
