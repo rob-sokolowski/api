@@ -5,6 +5,7 @@ package graph
 
 import (
 	"encoding/json"
+	"fmt"
 	mapset "github.com/deckarep/golang-set/v2"
 	"os"
 )
@@ -90,18 +91,31 @@ type EdgeNode struct {
 	Next   *EdgeNode
 }
 
-type Node[T comparable] struct {
+type Node[T NodeVal] struct {
 	id  int
 	val T
 }
 
 type Edge struct {
-	src    int
-	dest   int
-	weight *float32
+	src  int
+	dest int
 }
 
-type Graph2[T comparable] struct {
+type Person struct {
+	FirstName string
+	Lastname  string
+}
+
+type Movie struct {
+	Title string
+	Year  int
+}
+
+type NodeVal interface {
+	int | string | Person | Movie
+}
+
+type Graph2[T NodeVal] struct {
 	Nodes    mapset.Set[Node[T]]
 	Edges    mapset.Set[Edge]
 	Directed bool
@@ -164,21 +178,27 @@ func NewGraph(directed bool) (g *Graph) {
 }
 
 // JsonGraph is a simple JSON format for describing a graph
-type JsonGraph struct {
-	NVertices int     `json:"nVertices"`
-	Directed  bool    `json:"directed"`
-	Edges     [][]int `json:"edges"`
+type JsonGraph[T NodeVal] struct {
+	NVertices int                `json:"nVertices"`
+	Directed  bool               `json:"directed"`
+	Edges     [][]int            `json:"edges"`
+	Nodes     []persistedNode[T] `json:"nodes"`
+}
+
+type persistedNode[T NodeVal] struct {
+	Type_ string `json:"type"`
+	Val   T      `json:"Val"`
 }
 
 // FromJsonFile2 reads a JSON file with the schema of the JsonGraph struct,
 // into a Graph2
-func FromJsonFile2(path string) (*Graph2[int], error) {
+func FromJsonFile2[T NodeVal](path string) (*Graph2[int], error) {
 	content, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 	// Now let's unmarshall the data into `payload`
-	var payload JsonGraph
+	var payload JsonGraph[T]
 	err = json.Unmarshal(content, &payload)
 	if err != nil {
 		return nil, err
@@ -206,6 +226,34 @@ func FromJsonFile2(path string) (*Graph2[int], error) {
 	return &g, nil
 }
 
+func parseNode[T NodeVal](pnode persistedNode[T], i int) (interface{}, error) {
+
+	//switch pnode.Type_ {
+	//case "int":
+	//	node := Node[int]{
+	//		id:  i,
+	//		val: pnode.Val.(int),
+	//	}
+	//
+	//	return pnode.Val.(int), nil
+	//case "string":
+	//	node := Node[string]{
+	//		id:  i,
+	//		val: pnode.Val.(string),
+	//	}
+	//
+	//	return node, nil
+	//}
+
+	return nil, fmt.Errorf("unknown type_ field when parsing persisted node %s", pnode.Type_)
+}
+
+type OldJsonGraph = struct {
+	NVertices int     `json:"nVertices"`
+	Directed  bool    `json:"directed"`
+	Edges     [][]int `json:"edges"`
+}
+
 func FromJsonFile(path string) (*Graph, error) {
 	content, err := os.ReadFile(path)
 	if err != nil {
@@ -213,7 +261,7 @@ func FromJsonFile(path string) (*Graph, error) {
 	}
 
 	// Now let's unmarshall the data into `payload`
-	var payload JsonGraph
+	var payload OldJsonGraph
 	err = json.Unmarshal(content, &payload)
 	if err != nil {
 		return nil, err
