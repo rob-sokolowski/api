@@ -5,6 +5,7 @@ package graph
 
 import (
 	"encoding/json"
+	"fmt"
 	mapset "github.com/deckarep/golang-set/v2"
 	"os"
 )
@@ -90,32 +91,41 @@ type EdgeNode struct {
 	Next   *EdgeNode
 }
 
-type Node[T comparable] struct {
+type Node struct {
 	id  int
-	val T
+	val interface{}
 }
 
 type Edge struct {
-	src    int
-	dest   int
-	weight *float32
+	src  int
+	dest int
 }
 
-type Graph2[T comparable] struct {
-	Nodes    mapset.Set[Node[T]]
+//type Person struct {
+//	FirstName string
+//	Lastname  string
+//}
+//
+//type Movie struct {
+//	Title string
+//	Year  int
+//}
+//
+//type NodeVal interface {
+//	int | string | Person | Movie
+//}
+
+type Graph2 struct {
+	Nodes    []interface{}
 	Edges    mapset.Set[Edge]
 	Directed bool
 }
 
-func (g *Graph2[T]) addNode(newNode Node[T]) {
-	g.Nodes.Add(newNode)
+func (g *Graph2) addNode(n interface{}) {
+	g.Nodes = append(g.Nodes, n)
 }
 
-func (g *Graph2[T]) removeNode(newNode Node[T]) {
-	g.Nodes.Remove(newNode)
-}
-
-func (g *Graph2[T]) addEdge(src int, dest int) {
+func (g *Graph2) addEdge(src int, dest int) {
 	e := Edge{
 		src:  src,
 		dest: dest,
@@ -132,23 +142,6 @@ func (g *Graph2[T]) addEdge(src int, dest int) {
 	g.Edges.Add(e)
 }
 
-func (g *Graph2[T]) removeEdge(src int, dest int) {
-	e := Edge{
-		src:  src,
-		dest: dest,
-	}
-
-	if !g.Directed {
-		f := Edge{
-			src:  dest,
-			dest: src,
-		}
-		g.Edges.Remove(f)
-	}
-
-	g.Edges.Remove(e)
-}
-
 type Graph struct {
 	Edges     [maxVertices + 1]*EdgeNode
 	Degree    [maxVertices + 1]int
@@ -163,30 +156,40 @@ func NewGraph(directed bool) (g *Graph) {
 	return g
 }
 
+type NodeVal interface {
+	int | string
+}
+
 // JsonGraph is a simple JSON format for describing a graph
-type JsonGraph struct {
-	NVertices int     `json:"nVertices"`
-	Directed  bool    `json:"directed"`
-	Edges     [][]int `json:"edges"`
+type JsonGraph[T NodeVal] struct {
+	NVertices int                `json:"nVertices"`
+	Directed  bool               `json:"directed"`
+	Edges     [][]int            `json:"edges"`
+	Nodes     []persistedNode[T] `json:"nodes"`
+}
+
+type persistedNode[T NodeVal] struct {
+	Type_ string      `json:"type"`
+	Val   interface{} `json:"Val"`
 }
 
 // FromJsonFile2 reads a JSON file with the schema of the JsonGraph struct,
 // into a Graph2
-func FromJsonFile2(path string) (*Graph2[int], error) {
+func FromJsonFile2[T NodeVal](path string) (*Graph2, error) {
 	content, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 	// Now let's unmarshall the data into `payload`
-	var payload JsonGraph
+	var payload JsonGraph[T]
 	err = json.Unmarshal(content, &payload)
 	if err != nil {
 		return nil, err
 	}
 
-	g := Graph2[int]{
+	g := Graph2{
 		Edges:    mapset.NewSet[Edge](),
-		Nodes:    mapset.NewSet[Node[int]](),
+		Nodes:    make([]interface{}, 0, 1000),
 		Directed: payload.Directed,
 	}
 	// insert edge
@@ -195,15 +198,42 @@ func FromJsonFile2(path string) (*Graph2[int], error) {
 	}
 
 	// insert Nodes
-	for i := 1; i <= payload.NVertices; i++ {
-		node := Node[int]{
-			id:  i,
-			val: i,
+	for i, pNode := range payload.Nodes {
+		node, err := parseNode[T](i, pNode)
+		if err != nil {
+			return nil, fmt.Errorf("unable to parse persisted node, %s", pNode)
 		}
 		g.addNode(node)
 	}
 
 	return &g, nil
+}
+
+func parseNode[T NodeVal](i int, pnode persistedNode[T]) (interface{}, error) {
+	switch pnode.Type_ {
+	case "int":
+		node := Node{
+			id:  i,
+			val: int(pnode.Val.(float64)),
+		}
+
+		return node, nil
+	case "string":
+		node := Node{
+			id:  i,
+			val: pnode.Val.(string),
+		}
+
+		return node, nil
+	}
+
+	return nil, fmt.Errorf("unknown type_ field when parsing persisted node %s", pnode.Type_)
+}
+
+type OldJsonGraph = struct {
+	NVertices int     `json:"nVertices"`
+	Directed  bool    `json:"directed"`
+	Edges     [][]int `json:"edges"`
 }
 
 func FromJsonFile(path string) (*Graph, error) {
@@ -213,7 +243,7 @@ func FromJsonFile(path string) (*Graph, error) {
 	}
 
 	// Now let's unmarshall the data into `payload`
-	var payload JsonGraph
+	var payload OldJsonGraph
 	err = json.Unmarshal(content, &payload)
 	if err != nil {
 		return nil, err
