@@ -18,48 +18,14 @@ func TestNewGraph(t *testing.T) {
 	}
 }
 
-type MyUnion interface {
-	Person | Movie
-}
-
-func readVal(i int) interface{} {
-	if i == 1 {
-		return Person{FirstName: "Rob", Lastname: "Sokolowski"}
-	} else if i == 2 {
-		return Movie{Title: "Star Wars", Year: 1977}
-	}
-	return nil
-}
-
-type MyStruct[T MyUnion] struct {
-	Vals []T
-}
-
-func TestUnionType[T MyUnion](t *testing.T) {
-	var arr []interface{}
-
-	arr = make([]interface{}, 0, 10)
-
-	arr = append(arr, readVal(1))
-	arr = append(arr, readVal(2))
-
-	s := MyStruct[T]{
-		Vals: arr,
-	}
-
-	fmt.Println(s)
-
-	fmt.Println("Hello!")
-}
-
 func TestReadFromJsonGraph2(t *testing.T) {
 	g, _ := FromJsonFile2[int]("./test_example_1_generic.json")
 
 	if g.Edges.Cardinality() != 16 {
 		t.Errorf("Set of cardinality 16 expected, got %d", g.Edges.Cardinality())
 	}
-	if g.Nodes.Cardinality() != 8 {
-		t.Errorf("Set of cardinality 8 expected, got %d", g.Nodes.Cardinality())
+	if len(g.Nodes) != 8 {
+		t.Errorf("Set of cardinality 8 expected, got %d", len(g.Nodes))
 	}
 }
 

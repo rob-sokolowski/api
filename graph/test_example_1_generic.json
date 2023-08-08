@@ -15,12 +15,12 @@
       "val": 3
     },
     {
-      "type": "int",
-      "val": 4
+      "type": "string",
+      "val": "apple"
     },
     {
-      "type": "int",
-      "val": 5
+      "type": "string",
+      "val": "banana"
     },
     {
       "type": "int",
