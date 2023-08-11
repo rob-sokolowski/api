@@ -4,7 +4,57 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strings"
 )
+
+type Row struct {
+	id       int
+	username string
+	email    string
+}
+
+const USERNAME_MAX = 32
+
+const EMAIL_MAX = 255
+
+func (r *Row) setUsername(u string) error {
+	if len(u) > USERNAME_MAX {
+		return fmt.Errorf("maximum length of username is %d", USERNAME_MAX)
+	}
+
+	r.username = u
+	return nil
+}
+
+func (r *Row) setEmail(e string) error {
+	if len(e) > EMAIL_MAX {
+		return fmt.Errorf("maximum length of username is %d", EMAIL_MAX)
+	}
+
+	r.username = e
+	return nil
+}
+
+type Statement struct {
+	stmnt       string
+	rowToInsert *Row
+}
+
+const ROWS_PER_PAGE = 1024
+
+type Page = [ROWS_PER_PAGE]Row
+
+type Table struct {
+	NumRows int
+	Pages   []Page
+}
+
+func NewTable(pageCap int) *Table {
+	return &Table{
+		NumRows: 0,
+		Pages:   make([][ROWS_PER_PAGE]Row, 0, pageCap),
+	}
+}
 
 func validateMetaCommand(cmd string) error {
 	switch cmd {
@@ -24,10 +74,20 @@ func doMetaCommand(cmd string) {
 }
 
 func validateStatement(cmd string) error {
-	switch cmd {
+	args := strings.Split(cmd, " ")
+	cmd_ := strings.Join(args[1:], " ")
+	switch args[0] {
 	case "select":
 		return nil
+
 	case "insert":
+		row := &Row{}
+		nRead, err := fmt.Sscanf(cmd_, "%d %s %s", &row.id, &row.username, &row.email)
+		if err != nil {
+			fmt.Printf("I read %d things", nRead)
+		}
+
+		fmt.Println("you are trying to insert row: ", row)
 		return nil
 	}
 
