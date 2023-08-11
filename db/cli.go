@@ -31,7 +31,7 @@ func validateStatement(cmd string) error {
 		return nil
 	}
 
-	return fmt.Errorf("unrecognized meta command: %s", cmd)
+	return fmt.Errorf("unrecognized statement: %s", cmd)
 }
 
 func doStatement(cmd string) {
