@@ -7,15 +7,18 @@ import (
 	"strings"
 )
 
+// begin region: table structs
+const USERNAME_MAX = 32
+const EMAIL_MAX = 255
+const ROWS_PER_PAGE = 1024
+
+type Page = [ROWS_PER_PAGE]Row
+
 type Row struct {
 	id       int
 	username string
 	email    string
 }
-
-const USERNAME_MAX = 32
-
-const EMAIL_MAX = 255
 
 func (r *Row) setUsername(u string) error {
 	if len(u) > USERNAME_MAX {
@@ -40,10 +43,6 @@ type Statement struct {
 	rowToInsert *Row
 }
 
-const ROWS_PER_PAGE = 1024
-
-type Page = [ROWS_PER_PAGE]Row
-
 type Table struct {
 	NumRows int
 	Pages   []Page
@@ -55,6 +54,8 @@ func NewTable(pageCap int) *Table {
 		Pages:   make([][ROWS_PER_PAGE]Row, 0, pageCap),
 	}
 }
+
+// end region: table structs
 
 func validateMetaCommand(cmd string) error {
 	switch cmd {
@@ -73,7 +74,7 @@ func doMetaCommand(cmd string) {
 	}
 }
 
-func validateStatement(cmd string) error {
+func prepareStatement(cmd string) (Statement, error) {
 	args := strings.Split(cmd, " ")
 	cmd_ := strings.Join(args[1:], " ")
 	switch args[0] {
@@ -87,8 +88,12 @@ func validateStatement(cmd string) error {
 			fmt.Printf("I read %d things", nRead)
 		}
 
-		fmt.Println("you are trying to insert row: ", row)
-		return nil
+		statement := &Statement{
+			stmnt:       "insert",
+			rowToInsert: row,
+		}
+
+		return statement
 	}
 
 	return fmt.Errorf("unrecognized statement: %s", cmd)
@@ -121,7 +126,7 @@ func main() {
 			continue
 		}
 
-		err := validateStatement(input)
+		err := prepareStatement(input)
 		if err != nil {
 			fmt.Println(err)
 			continue
