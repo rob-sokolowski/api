@@ -101,20 +101,6 @@ type Edge struct {
 	dest int
 }
 
-//type Person struct {
-//	FirstName string
-//	Lastname  string
-//}
-//
-//type Movie struct {
-//	Title string
-//	Year  int
-//}
-//
-//type NodeVal interface {
-//	int | string | Person | Movie
-//}
-
 type Graph2 struct {
 	Nodes    []interface{}
 	Edges    mapset.Set[Edge]
